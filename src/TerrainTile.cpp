@@ -19,6 +19,7 @@
  * @brief This defines the `Terrain` and `TerrainTile` classes
  */
 
+#include <algorithm>
 #include <string.h>             // for memcpy
 
 #include "zlib.h"
@@ -317,7 +318,12 @@ TerrainTile::TerrainTile(const Terrain &terrain, const TileCoordinate &coord):
 {}
 
 GDALDatasetH
-TerrainTile::heightsToRaster() const {
+TerrainTile::heightsToRaster(bool realHeights) const {
+
+  GDALDataType type = GDT_Int16;
+  if (realHeights) {
+      type = GDT_Float32;
+  }
   // Create the geo transform for this raster tile
   const GlobalGeodetic profile;
   const CRSBounds tileBounds = profile.tileBounds(*this);
@@ -349,7 +355,7 @@ TerrainTile::heightsToRaster() const {
   GDALDatasetH hDstDS;
   GDALRasterBandH hBand;
 
-  hDstDS = GDALCreate(hDriver, "", tileSize, tileSize, 1, GDT_Int16, NULL );
+  hDstDS = GDALCreate(hDriver, "", tileSize, tileSize, 1, type, NULL );
   if (hDstDS == NULL) {
     CPLFree( pszDstWKT );
     throw CTBException("Could not create in memory raster");
@@ -369,10 +375,24 @@ TerrainTile::heightsToRaster() const {
     throw CTBException("Could not set projection on VRT");
   }
 
+  void* data = (void *) mHeights.data();
+  if (realHeights) {
+    std::vector<float> converted_heights;
+    converted_heights.reserve(mHeights.size());
+
+    //Transforms from saved values to floats again
+    std::transform(mHeights.begin(), mHeights.end(), converted_heights.begin(),
+                   [](i_terrain_height height) {
+                    float fHeight = (float)height;
+                    return fHeight/TerrainTile::heightScale-TerrainTile::heightOffset;
+    });
+    data = (void *) converted_heights.data();
+  }
+
   // Finally write the height data
   hBand = GDALGetRasterBand( hDstDS, 1 );
   if (GDALRasterIO( hBand, GF_Write, 0, 0, tileSize, tileSize,
-                    (void *) mHeights.data(), tileSize, tileSize, GDT_Int16, 0, 0 ) != CE_None) {
+                    data, tileSize, tileSize, type, 0, 0 ) != CE_None) {
     GDALClose(hDstDS);
     throw CTBException("Could not write heights to in memory raster");
   }

@@ -201,7 +201,7 @@ public:
 
   /// Get the height data as an in memory GDAL raster
   GDALDatasetH
-  heightsToRaster() const;
+  heightsToRaster(bool realHeights) const;
 };
 
 #endif /* TERRAINTILE_HPP */

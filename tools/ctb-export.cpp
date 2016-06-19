@@ -47,7 +47,8 @@ public:
     outputFilename(NULL),
     zoom(0),
     tx(0),
-    ty(0)
+    ty(0),
+    mExportRealHeights(false)
   {}
 
   static void
@@ -85,6 +86,12 @@ public:
     self->membersSet |= TT_TY;
   }
 
+  static void
+  exportRealHeights(command_t *command) {
+      TerrainExport *self = static_cast<TerrainExport *>(Command::self(command));
+      self->mExportRealHeights = true;
+  }
+
   void
   check() const {
     bool failed = false;
@@ -119,6 +126,7 @@ public:
   const char *outputFilename;
   i_zoom zoom;
   i_tile tx, ty;
+  bool mExportRealHeights;
 
 private:
   char membersSet;
@@ -133,8 +141,8 @@ private:
 
 /// Convert the terrain to the geotiff
 void
-terrain2tiff(TerrainTile &terrain, const char *filename) {
-  GDALDatasetH hTileDS = terrain.heightsToRaster();
+terrain2tiff(TerrainTile &terrain, const char *filename, bool exportRealHeights) {
+  GDALDatasetH hTileDS = terrain.heightsToRaster(exportRealHeights);
   GDALDatasetH hDstDS;
   GDALDriverH hDriver = GDALGetDriverByName("GTiff");
 
@@ -156,6 +164,7 @@ main(int argc, char *argv[]) {
   command.option("-x", "--tile-x <int>", "the tile x coordinate", TerrainExport::setTileX);
   command.option("-y", "--tile-y <int>", "the tile y coordinate", TerrainExport::setTileY);
   command.option("-o", "--output-filename <filename>", "the output file to create", TerrainExport::setOutputFilename);
+  command.option("-r", "--export-real-heights", "exports real heights instead of terrain values", TerrainExport::exportRealHeights);
 
   // Parse and check the arguments
   command.parse(argc, argv);
@@ -177,7 +186,7 @@ main(int argc, char *argv[]) {
   cout << "Creating " << command.outputFilename << " using zoom " << command.zoom << " from tile " << command.tx << "," << command.ty << endl;
 
   // Write the data to tiff
-  terrain2tiff(terrain, command.outputFilename);
+  terrain2tiff(terrain, command.outputFilename, command.mExportRealHeights);
 
   return 0;
 }
