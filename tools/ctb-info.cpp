@@ -41,7 +41,8 @@ public:
     Command(name, version),
     mShowHeights(false),
     mShowChildren(true),
-    mShowType(true)
+    mShowType(true),
+    mShowRealHeights(false)
   {}
 
   void
@@ -66,6 +67,12 @@ public:
   }
 
   static void
+  showRealHeights(command_t *command) {
+    static_cast<TerrainInfo *>(Command::self(command))->mShowRealHeights = true;
+    static_cast<TerrainInfo *>(Command::self(command))->mShowHeights = true;
+  }
+
+  static void
   hideChildInfo(command_t *command) {
     static_cast<TerrainInfo *>(Command::self(command))->mShowChildren = false;
   }
@@ -83,6 +90,7 @@ public:
   bool mShowHeights;
   bool mShowChildren;
   bool mShowType;
+  bool mShowRealHeights;
 };
 
 int
@@ -93,6 +101,7 @@ main(int argc, char *argv[]) {
   command.option("-e", "--show-heights", "show the height information as an ASCII raster", TerrainInfo::showHeights);
   command.option("-c", "--no-child", "hide information about child tiles", TerrainInfo::hideChildInfo);
   command.option("-t", "--no-type", "hide information about the tile type (i.e. water/land)", TerrainInfo::hideType);
+  command.option("-r", "--show-real-heights", "show the height information in m", TerrainInfo::showRealHeights);
 
   // Parse and check the arguments
   command.parse(argc, argv);
@@ -115,7 +124,12 @@ main(int argc, char *argv[]) {
     cout << "Heights:";
     for (std::vector<ctb::i_terrain_height>::const_iterator iter = heights.begin(); iter != heights.end(); ++iter) {
       if ((iter - heights.begin()) % TILE_SIZE == 0) cout << endl;
-      cout << *iter << " ";
+      if (command.mShowRealHeights) {
+        float fHeight = (float) *iter;
+        cout << fHeight/5.0-1000 << " ";
+      } else {
+        cout << *iter << " ";
+      }
     }
     cout << endl;
   }
