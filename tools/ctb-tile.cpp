@@ -456,9 +456,13 @@ runTiler(TerrainBuild *command, Grid *grid) {
 
 int
 main(int argc, char *argv[]) {
+  stringstream ss;
+  ss << "[options] GDAL_DATASOURCE\n  " << "data formula: value*1/" << TerrainTile::heightScale << " - "<< TerrainTile::heightOffset;
+  ss << " min data difference: " << 1/TerrainTile::heightScale;
+  string s = ss.str();
   // Specify the command line interface
   TerrainBuild command = TerrainBuild(argv[0], version.cstr);
-  command.setUsage("[options] GDAL_DATASOURCE");
+  command.setUsage(s.c_str());
   command.option("-o", "--output-dir <dir>", "specify the output directory for the tiles (defaults to working directory)", TerrainBuild::setOutputDir);
   command.option("-f", "--output-format <format>", "specify the output format for the tiles. This is either `Terrain` (the default) or any format listed by `gdalinfo --formats`", TerrainBuild::setOutputFormat);
   command.option("-p", "--profile <profile>", "specify the TMS profile for the tiles. This is either `geodetic` (the default) or `mercator`", TerrainBuild::setProfile);

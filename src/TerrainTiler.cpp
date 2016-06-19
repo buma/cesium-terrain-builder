@@ -47,7 +47,7 @@ ctb::TerrainTiler::createTile(const TileCoordinate &coord) const {
   // TODO: try doing this using a VRT derived band:
   // (http://www.gdal.org/gdal_vrttut.html)
   for (unsigned short int i = 0; i < TerrainTile::TILE_CELL_SIZE; i++) {
-    terrainTile->mHeights[i] = (i_terrain_height) ((rasterHeights[i] + 1000) * 5);
+    terrainTile->mHeights[i] = (i_terrain_height) ((rasterHeights[i] + TerrainTile::heightOffset) * TerrainTile::heightScale);
   }
 
   // If we are not at the maximum zoom level we need to set child flags on the

@@ -137,6 +137,9 @@ public:
   std::vector<i_terrain_height> &
   getHeights();
 
+  constexpr static const float heightScale = 5;
+  constexpr static const float  heightOffset = 1000;
+
 protected:
   /// The terrain height data
   std::vector<i_terrain_height> mHeights; // replace with `std::array` in C++11

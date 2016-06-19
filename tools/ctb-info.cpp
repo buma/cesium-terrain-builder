@@ -23,6 +23,7 @@
  */
 
 #include <iostream>
+#include <sstream>
 
 #include "gdal_priv.h"
 #include "commander.hpp"
@@ -95,9 +96,13 @@ public:
 
 int
 main(int argc, char *argv[]) {
+  stringstream ss;
+  ss << "[options] TERRAIN_FILE\n  " << "data formula: value*1/" << TerrainTile::heightScale << " - "<< TerrainTile::heightOffset;
+  ss << " min data difference: " << 1/TerrainTile::heightScale;
+  string s = ss.str();
   // Set up the command interface
   TerrainInfo command = TerrainInfo(argv[0], version.cstr);
-  command.setUsage("[options] TERRAIN_FILE");
+  command.setUsage(s.c_str());
   command.option("-e", "--show-heights", "show the height information as an ASCII raster", TerrainInfo::showHeights);
   command.option("-c", "--no-child", "hide information about child tiles", TerrainInfo::hideChildInfo);
   command.option("-t", "--no-type", "hide information about the tile type (i.e. water/land)", TerrainInfo::hideType);
@@ -126,7 +131,7 @@ main(int argc, char *argv[]) {
       if ((iter - heights.begin()) % TILE_SIZE == 0) cout << endl;
       if (command.mShowRealHeights) {
         float fHeight = (float) *iter;
-        cout << fHeight/5.0-1000 << " ";
+        cout << fHeight/ TerrainTile::heightScale-TerrainTile::heightOffset << " ";
       } else {
         cout << *iter << " ";
       }
